@@ -1,0 +1,79 @@
+/* .page {
+  --gray-rgb: 0, 0, 0;
+  --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
+  --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
+
+  --button-primary-hover: #383838;
+  --button-secondary-hover: #f2f2f2;
+  height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 109px 24px 88px;
+} */
+
+.todoContainer {
+  border: 1px solid #e0e0e0;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  box-shadow: 2px 5px 28px rgba(0, 0, 0, 0.05);
+}
+
+.mainTitle {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+/* Header */
+.header {
+  height: calc(72px - 28px);
+  padding: 14px 32px;
+  box-shadow: 2px 5px 28px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+}
+
+.header .profileContainer {
+  display: flex;
+  gap: 12px;
+}
+
+/* Sidebar */
+.sidebar {
+  height: 100vh;
+  box-shadow: 2px 5px 28px rgba(0, 0, 0, 0.08);
+}
+.sidebar .sidebarTop {
+  padding: 18px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sidebar .sidebarMenu {
+  margin-bottom: 4px;
+}
+.sidebar .sidebarMenu > .sidebarItem {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.sidebar .sidebarMenu > .sidebarItem.active {
+  padding: 14px 16px;
+  cursor: pointer;
+  background: linear-gradient(331.52deg, #4f92e3 -40.89%, #154886 96.79%);
+  border-radius: 8px;
+}
+.sidebarItem > .sidebarIcon {
+}
+
+.sidebarItem.active > .sidebarLabel {
+  font-size: 14px;
+  font-weight: 400;
+  color: #fff;
+}
+.sidebarItem > .sidebarLabel {
+  font-size: 14px;
+  font-weight: 400;
+  color: #4f4f4f;
+}
