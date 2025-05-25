@@ -28,6 +28,7 @@ import EmptyState from "@/components/EmptyState";
 import Todo from "@/components/DashboardPage/Todo";
 import SubTodo from "@/components/DashboardPage/SubTodo";
 import AddSubTodoField from "@/components/DashboardPage/AddSubTodoField";
+import { sortingCheckedItem, sortingNotCheckedItem } from "@/utils";
 
 const StyledTextField = styled(TextField)({
   "& .MuiOutlinedInput-root": {
@@ -64,8 +65,6 @@ type SubTodoItem = {
 };
 
 export default function Home() {
-  const infoUserLogin = localStorage.getItem("userLogin");
-  const storedItems = localStorage.getItem("todoItems");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [todoItemsState, setTodoItemsState] = useState<TodoItem[]>([]);
@@ -84,6 +83,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const infoUserLogin = localStorage.getItem("userLogin");
+    const storedItems = localStorage.getItem("todoItems");
     if (storedItems && infoUserLogin) {
       let userId = JSON.parse(infoUserLogin).id;
       let todoListItem = JSON.parse(storedItems);
@@ -158,6 +159,7 @@ export default function Home() {
   };
 
   const handleCreateTodo = () => {
+    const infoUserLogin = localStorage.getItem("userLogin");
     if (newTodo.todo && newTodo.dueDate && infoUserLogin) {
       let clone = [...todoItemsState];
 
@@ -306,13 +308,7 @@ export default function Home() {
                       ?.length > 0 ? (
                       todoItemsState
                         .filter((item) => item.is_done === false)
-                        .sort((a, b) => {
-                          const dateA = dayjs(a.dueDate);
-                          const dateB = dayjs(b.dueDate);
-                          if (dateA.isBefore(dateB)) return -1;
-                          if (dateA.isAfter(dateB)) return 1;
-                          return 0;
-                        })
+                        .sort(sortingNotCheckedItem)
                         .map((item, idx) => (
                           <Box key={item.id} className={styles.todoContainer}>
                             <Todo
@@ -365,14 +361,7 @@ export default function Home() {
                       ?.length > 0 ? (
                       todoItemsState
                         .filter((item) => item.is_done === true)
-                        .sort((a, b) => {
-                          const dateA = dayjs(a.dueDate);
-                          const dateB = dayjs(b.dueDate);
-                          // Urutkan descending: yang lebih baru dulu
-                          if (dateA.isAfter(dateB)) return -1;
-                          if (dateA.isBefore(dateB)) return 1;
-                          return 0;
-                        })
+                        .sort(sortingCheckedItem)
                         .map((item, idx) => (
                           <Box key={item.id} className={styles.todoContainer}>
                             <Todo

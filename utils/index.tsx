@@ -18,3 +18,20 @@ export function formatDueDate(item: TodoItem) {
     return <span className="future">{dueDate.format("YYYY-MM-DD")}</span>;
   }
 }
+
+export function sortingNotCheckedItem(a: TodoItem, b: TodoItem) {
+  const dateA = dayjs(a.dueDate);
+  const dateB = dayjs(b.dueDate);
+  if (dateA.isBefore(dateB)) return -1;
+  if (dateA.isAfter(dateB)) return 1;
+  return 0;
+}
+
+export function sortingCheckedItem(a: TodoItem, b: TodoItem) {
+  const dateA = dayjs(a.dueDate);
+  const dateB = dayjs(b.dueDate);
+  // Urutkan descending: yang lebih baru dulu
+  if (dateA.isAfter(dateB)) return -1;
+  if (dateA.isBefore(dateB)) return 1;
+  return 0;
+}
