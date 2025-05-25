@@ -6,6 +6,17 @@ body {
   font-family: var(--font-inter), sans-serif !important;
 }
 
+/* custom-datepicker.css */
+.today {
+  color: green;
+}
+.overdue {
+  color: red;
+}
+.future {
+  color: blue;
+}
+
 /* :root {
   --background: #ffffff;
   --foreground: #171717;

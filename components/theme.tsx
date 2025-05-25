@@ -64,6 +64,14 @@ export const theme = createTheme({
         },
       },
     },
+    MuiFormHelperText: {
+      styleOverrides: {
+        root: {
+          marginLeft: "0px",
+          fontSize: "0.75rem",
+        },
+      },
+    },
     MuiMenu: {
       styleOverrides: {
         paper: {

@@ -1,22 +1,16 @@
 "use client";
 
+import dayjs from "dayjs";
 import styles from "./dashboard.module.css";
 import Button from "@mui/material/Button";
+import "react-datetime/css/react-datetime.css";
+
 import {
   Box,
-  Card,
-  CardContent,
   Grid,
   Typography,
   List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Checkbox,
-  IconButton,
   TextField,
-  Menu,
-  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,15 +20,14 @@ import {
   styled,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import moreMenu from "@/public/icons/more-menu.svg";
 import plus from "@/public/icons/plus.svg";
-import deleteIcon from "@/public/icons/delete.svg";
-import emptyState from "@/public/empty-state.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
-// import SaveIcon from "@mui/icons-material/Save";
-// import CloseIcon from "@mui/icons-material/Close";
+import CardTodoType from "@/components/DashboardPage/CardTodoType";
+import EmptyState from "@/components/EmptyState";
+import Todo from "@/components/DashboardPage/Todo";
+import SubTodo from "@/components/DashboardPage/SubTodo";
+import AddSubTodoField from "@/components/DashboardPage/AddSubTodoField";
 
 const StyledTextField = styled(TextField)({
   "& .MuiOutlinedInput-root": {
@@ -83,6 +76,7 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [addingSubTodoId, setAddingSubTodoId] = useState<number | null>(null);
+  const [editingSubTodoId, setEditingSubTodoId] = useState<number | null>(null);
 
   useEffect(() => {
     const userLogin = localStorage.getItem("userLogin");
@@ -123,6 +117,26 @@ export default function Home() {
     setNewSubTodo(defaultValueSubTodo);
   };
 
+  const deleteSavedSubTodo = (parentContent: TodoItem, idxSubTodo: number) => {
+    let clone = [...todoItemsState];
+    const parentIndex = clone.findIndex((todo) => todo.id === parentContent.id);
+    if (parentIndex !== -1) {
+      const parentTodo = clone[parentIndex];
+
+      const updatedSubTodos = parentTodo.subTodos.filter(
+        (_, idx) => idx !== idxSubTodo
+      );
+
+      clone[parentIndex] = {
+        ...parentTodo,
+        subTodos: updatedSubTodos,
+      };
+
+      setTodoItemsState(clone);
+      localStorage.setItem("todoItems", JSON.stringify(clone));
+    }
+  };
+
   const handleAddSubTodo = (item: TodoItem) => {
     setAddingSubTodoId(item.id);
     handleClose();
@@ -141,13 +155,6 @@ export default function Home() {
     setTodoItemsState(clone);
     handleCloseModal();
     localStorage.setItem("todoItems", JSON.stringify(clone));
-  };
-
-  const handleOpenModal = () => setOpen(true);
-
-  const handleCloseModal = () => {
-    setOpen(false);
-    setNewTodo(defaultValueTodo);
   };
 
   const handleCreateTodo = () => {
@@ -174,7 +181,7 @@ export default function Home() {
     if (item.subTodos.length > 0) {
       updatedItems[parentIndex].subTodos = item.subTodos.map((subTodo) => ({
         ...subTodo,
-        is_done: !item.is_done, // Toggle sub-todos based on parent todo status
+        is_done: !item.is_done,
       }));
     }
     setTodoItemsState(updatedItems);
@@ -218,26 +225,50 @@ export default function Home() {
     setSelectedItem(null);
   };
 
-  const handleSaveSubTodo = (item: TodoItem, idx: number) => {
+  const handleSaveSubTodo = (idx: number, name: string) => {
     const updatedItems = [...todoItemsState];
+
+    const currentParent = updatedItems[idx];
+    let updatedSubTodos = [...currentParent.subTodos];
+
+    if (editingSubTodoId === null) {
+      const newId = Date.now();
+      const newSub = {
+        id: newId,
+        is_done: false,
+        name: name.trim(),
+      };
+
+      updatedSubTodos.push(newSub);
+      setEditingSubTodoId(newId);
+    } else {
+      updatedSubTodos = updatedSubTodos.map((sub) =>
+        sub.id === editingSubTodoId ? { ...sub, name: name.trim() } : sub
+      );
+    }
+
     updatedItems[idx] = {
-      ...item,
-      subTodos: [
-        ...item.subTodos,
-        {
-          id: Date.now(),
-          is_done: false,
-          name: newSubTodo.name,
-        },
-      ],
+      ...currentParent,
+      subTodos: updatedSubTodos,
     };
+
     setTodoItemsState(updatedItems);
-    setNewSubTodo(defaultValueSubTodo);
+    setNewSubTodo((prev) => ({ ...prev, name }));
     localStorage.setItem("todoItems", JSON.stringify(updatedItems));
   };
 
-  const handleCancelAddSubTodo = () => {
-    setAddingSubTodoId(null);
+  const handleEditSubTodo = (idx: number, idSubTodo: number) => {};
+
+  const createNewTodo = (e: any) => {
+    setNewSubTodo(defaultValueSubTodo);
+    setEditingSubTodoId(null);
+  };
+
+  const handleOpenModal = () => setOpen(true);
+
+  const handleCloseModal = () => {
+    setOpen(false);
+    setNewTodo(defaultValueTodo);
   };
 
   return (
@@ -250,7 +281,7 @@ export default function Home() {
           marginBottom: "32px",
         }}
       >
-        <div className={styles.mainTitle}>Todo</div>
+        <div className={styles.mainTitle}>📝 Todo</div>
         <Button
           variant="outlined"
           sx={{
@@ -269,450 +300,116 @@ export default function Home() {
           {todoItemsState?.length > 0 ? (
             <>
               <Grid size={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography
-                      gutterBottom
-                      sx={{ fontSize: 18, marginBottom: "24px" }}
-                    >
-                      Not Checked
-                    </Typography>
-                    <List>
-                      {todoItemsState.filter((item) => item.is_done === false)
-                        ?.length > 0 ? (
-                        todoItemsState
-                          .filter((item) => item.is_done === false)
-                          .map((item, idx) => (
-                            <Box key={item.id} className={styles.todoContainer}>
-                              <ListItem
-                                sx={{
-                                  backgroundColor: "white",
-                                }}
-                                secondaryAction={
-                                  <>
-                                    <IconButton
-                                      edge="end"
-                                      onClick={(e) => handleClick(e, item.id)}
-                                    >
-                                      <Image src={moreMenu} alt="more-menu" />
-                                    </IconButton>
-                                    <Menu
-                                      anchorEl={anchorEl}
-                                      open={
-                                        Boolean(anchorEl) &&
-                                        selectedItem === item.id
-                                      }
-                                      onClose={handleClose}
-                                      anchorOrigin={{
-                                        vertical: "bottom",
-                                        horizontal: "right",
-                                      }}
-                                      transformOrigin={{
-                                        vertical: "top",
-                                        horizontal: "right",
-                                      }}
-                                      sx={{
-                                        boxShadow:
-                                          "2px 5px 28px rgba(0, 0, 0, 0.05)",
-                                      }}
-                                    >
-                                      <MenuItem
-                                        onClick={() => handleStartEdit(item)}
-                                      >
-                                        Edit
-                                      </MenuItem>
-                                      <MenuItem
-                                        onClick={() => handleDeleteTodo(item)}
-                                      >
-                                        Delete
-                                      </MenuItem>
-                                      <MenuItem
-                                        onClick={() => handleAddSubTodo(item)}
-                                      >
-                                        Create Sub To-do
-                                      </MenuItem>
-                                    </Menu>
-                                  </>
-                                }
-                              >
-                                <ListItemIcon>
-                                  <Checkbox
-                                    edge="start"
-                                    checked={item.is_done}
-                                    onChange={() => handleToggle(item, idx)}
-                                  />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={
-                                    <Typography component="span">
-                                      {item.todo}
-                                    </Typography>
-                                  }
-                                  sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                  }}
-                                  secondary={
-                                    <Typography
-                                      component="span"
-                                      sx={{
-                                        color: item.overdue
-                                          ? "error.main"
-                                          : "text.secondary",
-                                        fontSize: "0.875rem",
-                                      }}
-                                    >
-                                      {item.dueDate}
-                                    </Typography>
-                                  }
-                                />
-                              </ListItem>
-                              {item.subTodos.length > 0 && (
-                                <List sx={{ pl: 4, pr: 2 }}>
-                                  {item.subTodos.map((subTodo, index) => (
-                                    <ListItem
-                                      key={subTodo.id}
-                                      sx={{
-                                        mb: 1,
-                                        backgroundColor: "white",
-                                        border: "none",
-                                        boxShadow:
-                                          "2px 5px 28px rgba(0, 0, 0, 0.05)",
-                                      }}
-                                      secondaryAction={
-                                        <IconButton edge="end">
-                                          <Image
-                                            src={deleteIcon}
-                                            alt="more-menu"
-                                          />
-                                        </IconButton>
-                                      }
-                                    >
-                                      <ListItemIcon>
-                                        <Checkbox
-                                          edge="start"
-                                          checked={subTodo.is_done}
-                                          onChange={() =>
-                                            handleToggleSubTodo(
-                                              item,
-                                              subTodo,
-                                              index
-                                            )
-                                          }
-                                        />
-                                      </ListItemIcon>
-                                      <ListItemText primary={subTodo.name} />
-                                    </ListItem>
-                                  ))}
-                                </List>
-                              )}
-                              {addingSubTodoId === item.id && (
-                                <List sx={{ pl: 4, pr: 2 }}>
-                                  <ListItem
-                                    sx={{
-                                      mb: 1,
-                                      backgroundColor: "white",
-                                      border: "1px solid #2F80ED",
+                <CardTodoType title="Not Checked">
+                  <List>
+                    {todoItemsState.filter((item) => item.is_done === false)
+                      ?.length > 0 ? (
+                      todoItemsState
+                        .filter((item) => item.is_done === false)
+                        .sort((a, b) => {
+                          const dateA = dayjs(a.dueDate);
+                          const dateB = dayjs(b.dueDate);
+                          if (dateA.isBefore(dateB)) return -1;
+                          if (dateA.isAfter(dateB)) return 1;
+                          return 0;
+                        })
+                        .map((item, idx) => (
+                          <Box key={item.id} className={styles.todoContainer}>
+                            <Todo
+                              item={item}
+                              anchorEl={anchorEl}
+                              handleStartEdit={handleStartEdit}
+                              handleDeleteTodo={handleDeleteTodo}
+                              handleAddSubTodo={handleAddSubTodo}
+                              handleToggle={handleToggle}
+                              idx={idx}
+                              selectedItem={selectedItem}
+                              handleClick={handleClick}
+                              handleClose={handleClose}
+                              type="not_checked"
+                            />
 
-                                      boxShadow:
-                                        "2px 5px 28px rgba(0, 0, 0, 0.05)",
-                                    }}
-                                    secondaryAction={
-                                      <IconButton
-                                        edge="end"
-                                        onClick={handleDeleteSubTodo}
-                                      >
-                                        <Image
-                                          src={deleteIcon}
-                                          alt="more-menu"
-                                        />
-                                      </IconButton>
-                                    }
-                                  >
-                                    <ListItemIcon>
-                                      <Checkbox edge="start" disabled />
-                                    </ListItemIcon>
-                                    <TextField
-                                      name="name"
-                                      id="name"
-                                      autoFocus
-                                      placeholder="New sub todo"
-                                      variant="standard"
-                                      fullWidth
-                                      value={newSubTodo.name}
-                                      onChange={(e) =>
-                                        setNewSubTodo({
-                                          ...newSubTodo,
-                                          name: e.target.value,
-                                        })
-                                      }
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          handleSaveSubTodo(item, idx);
-                                        } else if (e.key === "Escape") {
-                                          handleCancelAddSubTodo();
-                                        }
-                                      }}
-                                    />
-                                    <Box
-                                      sx={{ display: "flex", gap: 1, ml: 1 }}
-                                    >
-                                      {/* <IconButton
-                                    size="small"
-                                    onClick={() => handleSaveSubTodo(item.id)}
-                                    disabled={!newSubTodo.trim()}
-                                  ></IconButton>
-                                  <IconButton
-                                    size="small"
-                                    onClick={handleCancelAddSubTodo}
-                                  ></IconButton> */}
-                                    </Box>
-                                  </ListItem>
-                                </List>
-                              )}
-                            </Box>
-                          ))
-                      ) : (
-                        <Typography style={{ textAlign: "center" }}>
-                          No Todo Found
-                        </Typography>
-                      )}
-                    </List>
-                  </CardContent>
-                </Card>
+                            {item.subTodos.length > 0 && (
+                              <SubTodo
+                                item={item}
+                                deleteSavedSubTodo={deleteSavedSubTodo}
+                                handleToggleSubTodo={handleToggleSubTodo}
+                                handleEditSubTodo={handleEditSubTodo}
+                                idx={idx}
+                              />
+                            )}
+                            {addingSubTodoId === item.id && (
+                              <AddSubTodoField
+                                handleDeleteSubTodo={handleDeleteSubTodo}
+                                newSubTodo={newSubTodo}
+                                setNewSubTodo={setNewSubTodo}
+                                handleSaveSubTodo={handleSaveSubTodo}
+                                createNewTodo={createNewTodo}
+                                idx={idx}
+                              />
+                            )}
+                          </Box>
+                        ))
+                    ) : (
+                      <Typography style={{ textAlign: "center" }}>
+                        No Todo Found
+                      </Typography>
+                    )}
+                  </List>
+                </CardTodoType>
               </Grid>
               <Grid size={6}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography
-                      gutterBottom
-                      sx={{ fontSize: 18, marginBottom: "24px" }}
-                    >
-                      Checked
-                    </Typography>
-                    <List>
-                      {todoItemsState.filter((item) => item.is_done === true)
-                        ?.length > 0 ? (
-                        todoItemsState
-                          .filter((item) => item.is_done === true)
-                          .map((item, idx) => (
-                            <Box key={item.id} className={styles.todoContainer}>
-                              <ListItem
-                                sx={{
-                                  backgroundColor: "white",
-                                }}
-                                secondaryAction={
-                                  <>
-                                    <IconButton
-                                      edge="end"
-                                      onClick={(e) => handleClick(e, item.id)}
-                                    >
-                                      <Image src={moreMenu} alt="more-menu" />
-                                    </IconButton>
-                                    <Menu
-                                      anchorEl={anchorEl}
-                                      open={
-                                        Boolean(anchorEl) &&
-                                        selectedItem === item.id
-                                      }
-                                      onClose={handleClose}
-                                      anchorOrigin={{
-                                        vertical: "bottom",
-                                        horizontal: "right",
-                                      }}
-                                      transformOrigin={{
-                                        vertical: "top",
-                                        horizontal: "right",
-                                      }}
-                                      sx={{
-                                        boxShadow:
-                                          "2px 5px 28px rgba(0, 0, 0, 0.05)",
-                                      }}
-                                    >
-                                      <MenuItem
-                                        onClick={() => handleDeleteTodo(item)}
-                                      >
-                                        Delete
-                                      </MenuItem>
-                                    </Menu>
-                                  </>
-                                }
-                              >
-                                <ListItemIcon>
-                                  <Checkbox
-                                    edge="start"
-                                    checked={item.is_done}
-                                    onChange={() => handleToggle(item, idx)}
-                                  />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={
-                                    <Typography
-                                      component="span"
-                                      sx={{
-                                        textDecoration: item.is_done
-                                          ? "line-through"
-                                          : "none",
-                                      }}
-                                    >
-                                      {item.todo}
-                                    </Typography>
-                                  }
-                                  sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                  }}
-                                  secondary={
-                                    <Typography
-                                      component="span"
-                                      sx={{
-                                        color: item.overdue
-                                          ? "error.main"
-                                          : "text.secondary",
-                                        fontSize: "0.875rem",
-                                      }}
-                                    >
-                                      {item.dueDate}
-                                    </Typography>
-                                  }
-                                />
-                              </ListItem>
-                              {item.subTodos.length > 0 && (
-                                <List sx={{ pl: 4, pr: 2 }}>
-                                  {item.subTodos.map((subTodo, index) => (
-                                    <ListItem
-                                      key={subTodo.id}
-                                      sx={{
-                                        mb: 1,
-                                        backgroundColor: "white",
-                                        border: "none",
-                                        boxShadow:
-                                          "2px 5px 28px rgba(0, 0, 0, 0.05)",
-                                      }}
-                                      secondaryAction={
-                                        <IconButton edge="end">
-                                          <Image
-                                            src={deleteIcon}
-                                            alt="more-menu"
-                                          />
-                                        </IconButton>
-                                      }
-                                    >
-                                      <ListItemIcon>
-                                        <Checkbox
-                                          edge="start"
-                                          checked={subTodo.is_done}
-                                          onChange={() =>
-                                            handleToggleSubTodo(
-                                              item,
-                                              subTodo,
-                                              index
-                                            )
-                                          }
-                                        />
-                                      </ListItemIcon>
-                                      <ListItemText primary={subTodo.name} />
-                                    </ListItem>
-                                  ))}
-                                </List>
-                              )}
-                              {addingSubTodoId === item.id && (
-                                <List sx={{ pl: 4, pr: 2 }}>
-                                  <ListItem
-                                    sx={{
-                                      mb: 1,
-                                      backgroundColor: "white",
-                                      border: "1px solid #2F80ED",
-
-                                      boxShadow:
-                                        "2px 5px 28px rgba(0, 0, 0, 0.05)",
-                                    }}
-                                    secondaryAction={
-                                      <IconButton
-                                        edge="end"
-                                        onClick={handleDeleteSubTodo}
-                                      >
-                                        <Image
-                                          src={deleteIcon}
-                                          alt="more-menu"
-                                        />
-                                      </IconButton>
-                                    }
-                                  >
-                                    <ListItemIcon>
-                                      <Checkbox edge="start" disabled />
-                                    </ListItemIcon>
-                                    <TextField
-                                      name="name"
-                                      id="name"
-                                      autoFocus
-                                      placeholder="New sub todo"
-                                      variant="standard"
-                                      fullWidth
-                                      value={newSubTodo.name}
-                                      onChange={(e) =>
-                                        setNewSubTodo({
-                                          ...newSubTodo,
-                                          name: e.target.value,
-                                        })
-                                      }
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          handleSaveSubTodo(item, idx);
-                                        } else if (e.key === "Escape") {
-                                          handleCancelAddSubTodo();
-                                        }
-                                      }}
-                                    />
-                                    <Box
-                                      sx={{ display: "flex", gap: 1, ml: 1 }}
-                                    >
-                                      {/* <IconButton
-                                    size="small"
-                                    onClick={() => handleSaveSubTodo(item.id)}
-                                    disabled={!newSubTodo.trim()}
-                                  ></IconButton>
-                                  <IconButton
-                                    size="small"
-                                    onClick={handleCancelAddSubTodo}
-                                  ></IconButton> */}
-                                    </Box>
-                                  </ListItem>
-                                </List>
-                              )}
-                            </Box>
-                          ))
-                      ) : (
-                        <Typography style={{ textAlign: "center" }}>
-                          No Finished Todo Found
-                        </Typography>
-                      )}
-                    </List>
-                  </CardContent>
-                </Card>
+                <CardTodoType title="Checked">
+                  <List>
+                    {todoItemsState.filter((item) => item.is_done === true)
+                      ?.length > 0 ? (
+                      todoItemsState
+                        .filter((item) => item.is_done === true)
+                        .sort((a, b) => {
+                          const dateA = dayjs(a.dueDate);
+                          const dateB = dayjs(b.dueDate);
+                          // Urutkan descending: yang lebih baru dulu
+                          if (dateA.isAfter(dateB)) return -1;
+                          if (dateA.isBefore(dateB)) return 1;
+                          return 0;
+                        })
+                        .map((item, idx) => (
+                          <Box key={item.id} className={styles.todoContainer}>
+                            <Todo
+                              item={item}
+                              anchorEl={anchorEl}
+                              handleStartEdit={handleStartEdit}
+                              handleDeleteTodo={handleDeleteTodo}
+                              handleAddSubTodo={handleAddSubTodo}
+                              handleToggle={handleToggle}
+                              idx={idx}
+                              selectedItem={selectedItem}
+                              handleClick={handleClick}
+                              handleClose={handleClose}
+                              type="checked"
+                            />
+                            {item.subTodos.length > 0 && (
+                              <SubTodo
+                                item={item}
+                                deleteSavedSubTodo={deleteSavedSubTodo}
+                                handleToggleSubTodo={handleToggleSubTodo}
+                                handleEditSubTodo={handleEditSubTodo}
+                                idx={idx}
+                              />
+                            )}
+                          </Box>
+                        ))
+                    ) : (
+                      <Typography style={{ textAlign: "center" }}>
+                        No Finished Todo Found
+                      </Typography>
+                    )}
+                  </List>
+                </CardTodoType>
               </Grid>
             </>
           ) : (
-            <Grid
-              size={12}
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                marginTop: "64px",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <Image src={emptyState} alt="empty-state" />
-              <Typography
-                variant="h6"
-                sx={{ marginTop: "32px", color: "#154886", opacity: 0.6 }}
-              >
-                You Don't Have a Todo Yet
-              </Typography>
-            </Grid>
+            <EmptyState />
           )}
         </Grid>
       </Box>
@@ -756,7 +453,6 @@ export default function Home() {
               >
                 Due Date
               </FormLabel>
-
               <StyledTextField
                 id="date"
                 name="date"
@@ -766,6 +462,11 @@ export default function Home() {
                 onChange={(e) =>
                   setNewTodo({ ...newTodo, dueDate: e.target.value })
                 }
+                slotProps={{
+                  htmlInput: {
+                    min: editingId ? undefined : dayjs().format("YYYY-MM-DD"),
+                  },
+                }}
               />
             </FormControl>
           </Box>

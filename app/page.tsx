@@ -12,14 +12,22 @@ export default function Home() {
           size={6}
           sx={{
             backgroundColor: "#F8FAFF",
-            display: "flex",
             justifyContent: "center",
             alignItems: "center",
+            display: {
+              xs: "none", // xs = mobile (smaller than sm)
+              sm: "none", // sm = small devices (mobile/tablet)
+              md: "flex", // md ke atas tampil (tablet ke atas)
+            },
           }}
         >
-          <Image src={Illustration} alt="Illustration" objectFit="contain" />
+          <Image
+            src={Illustration}
+            alt="Illustration"
+            style={{ width: "100%", height: "auto" }}
+          />
         </Grid>
-        <Grid size={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <div className={styles.page}>
             <div className={styles.title}>Welcome Back</div>
             <LoginForm />

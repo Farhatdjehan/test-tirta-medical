@@ -1,0 +1,120 @@
+import { formatDueDate } from "@/utils";
+import {
+  Checkbox,
+  IconButton,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Typography,
+} from "@mui/material";
+import Image from "next/image";
+import moreMenu from "@/public/icons/more-menu.svg";
+
+interface TodoProps {
+  item: any;
+  anchorEl: any;
+  handleStartEdit: any;
+  handleDeleteTodo: any;
+  handleAddSubTodo: any;
+  handleToggle: any;
+  idx: number;
+  selectedItem: any;
+  handleClick: any;
+  handleClose: any;
+  type: string;
+}
+
+export default function Todo(props: TodoProps) {
+  const {
+    anchorEl,
+    item,
+    handleStartEdit,
+    handleDeleteTodo,
+    handleAddSubTodo,
+    handleToggle,
+    idx,
+    selectedItem,
+    handleClick,
+    handleClose,
+    type,
+  } = props;
+  return (
+    <ListItem
+      sx={{
+        backgroundColor: "white",
+      }}
+      secondaryAction={
+        <>
+          <IconButton edge="end" onClick={(e) => handleClick(e, item.id)}>
+            <Image src={moreMenu} alt="more-menu" />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl) && selectedItem === item.id}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+            sx={{
+              boxShadow: "2px 5px 28px rgba(0, 0, 0, 0.05)",
+            }}
+          >
+            {type === "not_checked" && (
+              <MenuItem onClick={() => handleStartEdit(item)}>Edit</MenuItem>
+            )}
+            <MenuItem onClick={() => handleDeleteTodo(item)}>Delete</MenuItem>
+            {type === "not_checked" && (
+              <MenuItem onClick={() => handleAddSubTodo(item)}>
+                Create Sub To-do
+              </MenuItem>
+            )}
+          </Menu>
+        </>
+      }
+    >
+      <ListItemIcon>
+        <Checkbox
+          edge="start"
+          checked={item.is_done}
+          onChange={() => handleToggle(item, idx)}
+        />
+      </ListItemIcon>
+      <ListItemText
+        primary={
+          <Typography
+            component="span"
+            sx={{
+              textDecoration:
+                type === "checked" && item.is_done ? "line-through" : "none",
+            }}
+          >
+            {item.todo}
+          </Typography>
+        }
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+        secondary={
+          <Typography
+            component="span"
+            sx={{
+              color: item.overdue ? "error.main" : "text.secondary",
+              fontSize: "0.875rem",
+            }}
+          >
+            {formatDueDate(item)}
+          </Typography>
+        }
+      />
+    </ListItem>
+  );
+}

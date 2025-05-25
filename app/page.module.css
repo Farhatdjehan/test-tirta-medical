@@ -9,7 +9,10 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 24px 109px 24px 88px;
+  padding: 32px;
+  @media (min-width: 768px) {
+    padding: 24px 109px 24px 88px;
+  }
 }
 .title {
   font-size: 32px;
