@@ -3,8 +3,6 @@
 import dayjs from "dayjs";
 import styles from "./dashboard.module.css";
 import Button from "@mui/material/Button";
-import "react-datetime/css/react-datetime.css";
-
 import {
   Box,
   Grid,
@@ -68,8 +66,9 @@ export default function Home() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmationDelete, setConfirmationDelete] = useState<{
-    data: Partial<TodoItem>;
+    data: any;
     open: boolean;
+    idSelected?: number;
   }>(defaultSelectedValue);
   const [todoItemsState, setTodoItemsState] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState<TodoItem>(defaultValueTodo);
@@ -108,10 +107,15 @@ export default function Home() {
     setOpen(true);
   };
 
-  const confirmationPopup = (item: TodoItem) => {
+  const confirmationPopup = (item: any, idxSubTodo?: number) => {
     let clone = { ...confirmationDelete };
     clone.data = item;
     clone.open = true;
+
+    if (idxSubTodo !== undefined) {
+      console.log(idxSubTodo);
+      clone.idSelected = idxSubTodo;
+    }
     setConfirmationDelete(clone);
   };
 
@@ -146,6 +150,7 @@ export default function Home() {
 
       setTodoItemsState(clone);
       localStorage.setItem("todoItems", JSON.stringify(clone));
+      setConfirmationDelete(defaultSelectedValue);
     }
   };
 
@@ -375,7 +380,7 @@ export default function Home() {
                             {item.subTodos.length > 0 && (
                               <SubTodo
                                 item={item}
-                                deleteSavedSubTodo={deleteSavedSubTodo}
+                                deleteSavedSubTodo={confirmationPopup}
                                 handleToggleSubTodo={handleToggleSubTodo}
                                 handleEditSubTodo={handleEditSubTodo}
                                 idx={idx}
@@ -426,7 +431,7 @@ export default function Home() {
                             {item.subTodos.length > 0 && (
                               <SubTodo
                                 item={item}
-                                deleteSavedSubTodo={deleteSavedSubTodo}
+                                deleteSavedSubTodo={confirmationPopup}
                                 handleToggleSubTodo={handleToggleSubTodo}
                                 handleEditSubTodo={handleEditSubTodo}
                                 idx={idx}
@@ -543,16 +548,26 @@ export default function Home() {
         <DialogContent>
           <Box sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
             <Typography>
-              Are you sure want to delete {confirmationDelete.data.todo}?
+              Are you sure want to delete{" "}
+              {confirmationDelete?.idSelected !== undefined
+                ? confirmationDelete.data.subTodos[
+                    confirmationDelete.idSelected
+                  ].name
+                : confirmationDelete.data.todo}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button
             variant="contained"
-            onClick={() =>
-              handleDeleteTodo(confirmationDelete.data as TodoItem)
-            }
+            onClick={() => {
+              confirmationDelete.idSelected !== undefined
+                ? deleteSavedSubTodo(
+                    confirmationDelete.data,
+                    confirmationDelete.idSelected
+                  )
+                : handleDeleteTodo(confirmationDelete.data);
+            }}
           >
             Delete
           </Button>
@@ -577,7 +592,6 @@ const defaultValueSubTodo = {
   is_done: false,
   name: "",
 };
-
 const defaultSelectedValue = {
   data: {},
   open: false,
