@@ -26,15 +26,38 @@
 
 /* Header */
 .header {
-  height: calc(72px - 28px);
-  padding: 14px 32px;
+  height: auto;
+  padding: 14px 24px;
   box-shadow: 2px 5px 28px rgba(0, 0, 0, 0.08);
   background-color: #fff;
+  @media (min-width: 768px) {
+    height: calc(72px - 28px);
+    padding: 14px 32px;
+  }
 }
 
 .header .profileContainer {
   display: flex;
   gap: 12px;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.header .userLogin {
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 2px;
+}
+
+.header .userRole {
+  font-size: 14px;
+  font-weight: 400;
+  color: #828282;
+  text-align: right;
 }
 
 /* Sidebar */

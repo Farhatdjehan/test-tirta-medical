@@ -12,17 +12,25 @@ import {
 import Image from "next/image";
 import moreMenu from "@/public/icons/more-menu.svg";
 
+interface TodoItemProps {
+  id: number;
+  userId: number;
+  todo: string;
+  is_done: boolean;
+  dueDate: string;
+  subTodos: { id: number; is_done: boolean; name: string }[];
+  overdue?: boolean;
+}
 interface TodoProps {
-  item: any;
-  anchorEl: any;
-  handleStartEdit: any;
-  handleDeleteTodo: any;
-  handleAddSubTodo: any;
-  handleToggle: any;
-  idx: number;
-  selectedItem: any;
-  handleClick: any;
-  handleClose: any;
+  item: TodoItemProps;
+  anchorEl: null | HTMLElement;
+  handleStartEdit: (item: TodoItemProps) => void;
+  handleDeleteTodo: (item: TodoItemProps) => void;
+  handleAddSubTodo: (item: TodoItemProps) => void;
+  handleToggle: (item: TodoItemProps) => void;
+  selectedItem: number | null;
+  handleClick: (event: React.MouseEvent<HTMLElement>, itemId: number) => void;
+  handleClose: () => void;
   type: string;
 }
 
@@ -34,7 +42,6 @@ export default function Todo(props: TodoProps) {
     handleDeleteTodo,
     handleAddSubTodo,
     handleToggle,
-    idx,
     selectedItem,
     handleClick,
     handleClose,
@@ -83,7 +90,7 @@ export default function Todo(props: TodoProps) {
         <Checkbox
           edge="start"
           checked={item.is_done}
-          onChange={() => handleToggle(item, idx)}
+          onChange={() => handleToggle(item)}
         />
       </ListItemIcon>
       <ListItemText
@@ -107,7 +114,6 @@ export default function Todo(props: TodoProps) {
           <Typography
             component="span"
             sx={{
-              color: item.overdue ? "error.main" : "text.secondary",
               fontSize: "0.875rem",
             }}
           >

@@ -18,9 +18,11 @@ import {
 } from "@mui/material";
 import styles from "../../app/page.module.css";
 import { useRouter } from "next/navigation";
+import logoGoogle from "@/public/icons/google_logo.svg";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import Image from "next/image";
 
 const StyledTextField = styled(TextField)({
   "& .MuiOutlinedInput-root": {
@@ -65,7 +67,6 @@ export default function LoginForm() {
     resolver: yupResolver(schema),
     mode: "onTouched",
   });
-  const userListData = localStorage.getItem("userList");
   const router = useRouter();
   const [userList, setUserList] = useState<DataLogin[]>([]);
   const [open, setOpen] = useState(false);
@@ -76,6 +77,7 @@ export default function LoginForm() {
   }, []);
 
   useEffect(() => {
+    const userListData = localStorage.getItem("userList");
     if (userListData) {
       setUserList(JSON.parse(userListData));
     } else {
@@ -195,6 +197,7 @@ export default function LoginForm() {
           fullWidth
           type="button"
           size="large"
+          startIcon={<Image src={logoGoogle} alt="logo-google" />}
         >
           Sign in with Google
         </Button>

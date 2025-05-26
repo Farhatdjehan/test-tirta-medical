@@ -3,8 +3,10 @@
 import Sidebar from "@/components/DashboardPage/Sidebar";
 import "../globals.css";
 import { Box, Grid } from "@mui/material";
-import Header from "@/components/DashboardPage/Header";
-
+import dynamic from "next/dynamic";
+const Header = dynamic(() => import("@/components/DashboardPage/Header"), {
+  ssr: false,
+});
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -13,10 +15,26 @@ export default function RootLayout({
   return (
     <Box>
       <Grid container>
-        <Grid size={2}>
+        <Grid
+          size={{
+            lg: 2,
+          }}
+          sx={{
+            display: {
+              xs: "none",
+              sm: "none",
+              lg: "block",
+            },
+          }}
+        >
           <Sidebar />
         </Grid>
-        <Grid size={10}>
+        <Grid
+          size={{
+            xs: 12,
+            lg: 10,
+          }}
+        >
           <Header />
           <Box
             sx={{

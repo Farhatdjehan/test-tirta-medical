@@ -15,9 +15,9 @@ export default function Home() {
             justifyContent: "center",
             alignItems: "center",
             display: {
-              xs: "none", // xs = mobile (smaller than sm)
-              sm: "none", // sm = small devices (mobile/tablet)
-              md: "flex", // md ke atas tampil (tablet ke atas)
+              xs: "none",
+              sm: "none",
+              md: "flex",
             },
           }}
         >

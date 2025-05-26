@@ -9,11 +9,35 @@ import {
 import Image from "next/image";
 import deleteIcon from "@/public/icons/delete.svg";
 
+interface SubTodoItem {
+  id: number;
+  is_done: boolean;
+  name: string;
+}
+
+interface itemProps {
+  id: number;
+  userId: number;
+  todo: string;
+  is_done: boolean;
+  dueDate: string;
+  subTodos: SubTodoItem[];
+  overdue?: boolean;
+}
+
 interface SubTodoProps {
-  item: any;
-  deleteSavedSubTodo: any;
-  handleToggleSubTodo: any;
-  handleEditSubTodo: any;
+  item: itemProps;
+  deleteSavedSubTodo: (parentContent: itemProps, idxSubTodo: number) => void;
+  handleToggleSubTodo: (
+    item: itemProps,
+    subItem: SubTodoItem,
+    idx: number
+  ) => void;
+  handleEditSubTodo: (
+    item: itemProps,
+    idx: number,
+    subTodo: SubTodoItem
+  ) => void;
   idx: number;
 }
 
@@ -27,7 +51,7 @@ export default function SubTodo(props: SubTodoProps) {
   } = props;
   return (
     <List sx={{ pl: 4, pr: 2 }}>
-      {item.subTodos.map((subTodo: any, index: any) => (
+      {item.subTodos.map((subTodo, index) => (
         <ListItem
           key={subTodo.id}
           sx={{
@@ -55,7 +79,7 @@ export default function SubTodo(props: SubTodoProps) {
 
           <ListItemText
             primary={subTodo.name}
-            onClick={() => handleEditSubTodo(idx, subTodo.id)}
+            onClick={() => handleEditSubTodo(item, index, subTodo)}
           />
         </ListItem>
       ))}

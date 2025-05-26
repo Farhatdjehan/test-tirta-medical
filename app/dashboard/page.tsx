@@ -48,7 +48,7 @@ const StyledTextField = styled(TextField)({
   },
 });
 
-type TodoItem = {
+interface TodoItem {
   id: number;
   userId: number;
   todo: string;
@@ -56,26 +56,30 @@ type TodoItem = {
   dueDate: string;
   subTodos: { id: number; is_done: boolean; name: string }[];
   overdue?: boolean;
-};
+}
 
-type SubTodoItem = {
+interface SubTodoItem {
   id: number;
   is_done: boolean;
   name: string;
-};
+}
 
 export default function Home() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [confirmationDelete, setConfirmationDelete] = useState<{
+    data: Partial<TodoItem>;
+    open: boolean;
+  }>(defaultSelectedValue);
   const [todoItemsState, setTodoItemsState] = useState<TodoItem[]>([]);
   const [newTodo, setNewTodo] = useState<TodoItem>(defaultValueTodo);
   const [newSubTodo, setNewSubTodo] =
     useState<SubTodoItem>(defaultValueSubTodo);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedItem, setSelectedItem] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
   const [addingSubTodoId, setAddingSubTodoId] = useState<number | null>(null);
   const [editingSubTodoId, setEditingSubTodoId] = useState<number | null>(null);
+  const [indexSubTodo, setIndexSubTodo] = useState<number | null>(null);
 
   useEffect(() => {
     const userLogin = localStorage.getItem("userLogin");
@@ -99,10 +103,16 @@ export default function Home() {
   }, []);
 
   const handleStartEdit = (item: TodoItem) => {
-    setEditingId(item.id);
     setNewTodo(item);
     handleClose();
     setOpen(true);
+  };
+
+  const confirmationPopup = (item: TodoItem) => {
+    let clone = { ...confirmationDelete };
+    clone.data = item;
+    clone.open = true;
+    setConfirmationDelete(clone);
   };
 
   const handleDeleteTodo = (item: TodoItem) => {
@@ -111,6 +121,7 @@ export default function Home() {
     clone.splice(parentIndex, 1);
     setTodoItemsState(clone);
     localStorage.setItem("todoItems", JSON.stringify(clone));
+    setConfirmationDelete(defaultSelectedValue);
   };
 
   const handleDeleteSubTodo = () => {
@@ -158,6 +169,25 @@ export default function Home() {
     localStorage.setItem("todoItems", JSON.stringify(clone));
   };
 
+  const updateSubTodo = () => {
+    const updatedItems = [...todoItemsState];
+    const parentIndex = updatedItems.findIndex(
+      (todo) => todo.id === newTodo.id
+    );
+    if (parentIndex !== -1 && indexSubTodo !== null) {
+      updatedItems[parentIndex].subTodos[indexSubTodo] = {
+        ...newSubTodo,
+        name: newSubTodo.name,
+      };
+      setOpen(false);
+      setNewTodo(defaultValueTodo);
+      setNewSubTodo(defaultValueSubTodo);
+      setIndexSubTodo(null);
+      setTodoItemsState(updatedItems);
+      localStorage.setItem("todoItems", JSON.stringify(updatedItems));
+    }
+  };
+
   const handleCreateTodo = () => {
     const infoUserLogin = localStorage.getItem("userLogin");
     if (newTodo.todo && newTodo.dueDate && infoUserLogin) {
@@ -173,7 +203,7 @@ export default function Home() {
     }
   };
 
-  const handleToggle = (item: TodoItem, idx: number) => {
+  const handleToggle = (item: TodoItem) => {
     const updatedItems = [...todoItemsState];
     const parentIndex = updatedItems.findIndex((todo) => todo.id === item.id);
     updatedItems[parentIndex] = {
@@ -259,9 +289,18 @@ export default function Home() {
     localStorage.setItem("todoItems", JSON.stringify(updatedItems));
   };
 
-  const handleEditSubTodo = (idx: number, idSubTodo: number) => {};
+  const handleEditSubTodo = (
+    item: TodoItem,
+    idx: number,
+    itemSubTodo: SubTodoItem
+  ) => {
+    setNewTodo(item);
+    setNewSubTodo(itemSubTodo);
+    setIndexSubTodo(idx);
+    setOpen(true);
+  };
 
-  const createNewTodo = (e: any) => {
+  const createNewTodo = () => {
     setNewSubTodo(defaultValueSubTodo);
     setEditingSubTodoId(null);
   };
@@ -271,43 +310,52 @@ export default function Home() {
   const handleCloseModal = () => {
     setOpen(false);
     setNewTodo(defaultValueTodo);
+    setNewSubTodo(defaultValueSubTodo);
+  };
+
+  const handleCloseModalConfirmation = () => {
+    setConfirmationDelete(defaultSelectedValue);
   };
 
   return (
     <>
-      <Box
-        sx={{
-          display: "flex",
-          gap: "24px",
-          alignItems: "center",
-          marginBottom: "32px",
-        }}
-      >
-        <div className={styles.mainTitle}>📝 Todo</div>
-        <Button
-          variant="outlined"
+      <Box>
+        <Grid
+          container
+          spacing={2}
           sx={{
-            "& .MuiButton-endIcon": {
-              marginLeft: "32px", // Adds space between text and icon
-            },
+            display: "flex",
+            gap: "24px",
+            alignItems: "center",
+            marginBottom: "32px",
           }}
-          endIcon={<Image src={plus} alt="plus" />}
-          onClick={handleOpenModal}
         >
-          Create Todo{" "}
-        </Button>
+          <div className={styles.mainTitle}>📝 Todo</div>
+          <Button
+            variant="outlined"
+            sx={{
+              "& .MuiButton-endIcon": {
+                marginLeft: "32px",
+              },
+            }}
+            endIcon={<Image src={plus} alt="plus" />}
+            onClick={handleOpenModal}
+          >
+            Create Todo{" "}
+          </Button>
+        </Grid>
       </Box>
       <Box>
         <Grid container spacing={2}>
           {todoItemsState?.length > 0 ? (
             <>
-              <Grid size={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <CardTodoType title="Not Checked">
                   <List>
-                    {todoItemsState.filter((item) => item.is_done === false)
-                      ?.length > 0 ? (
+                    {todoItemsState.filter((item) => !item.is_done)?.length >
+                    0 ? (
                       todoItemsState
-                        .filter((item) => item.is_done === false)
+                        .filter((item) => !item.is_done)
                         .sort(sortingNotCheckedItem)
                         .map((item, idx) => (
                           <Box key={item.id} className={styles.todoContainer}>
@@ -315,10 +363,9 @@ export default function Home() {
                               item={item}
                               anchorEl={anchorEl}
                               handleStartEdit={handleStartEdit}
-                              handleDeleteTodo={handleDeleteTodo}
+                              handleDeleteTodo={confirmationPopup}
                               handleAddSubTodo={handleAddSubTodo}
                               handleToggle={handleToggle}
-                              idx={idx}
                               selectedItem={selectedItem}
                               handleClick={handleClick}
                               handleClose={handleClose}
@@ -354,13 +401,13 @@ export default function Home() {
                   </List>
                 </CardTodoType>
               </Grid>
-              <Grid size={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <CardTodoType title="Checked">
                   <List>
-                    {todoItemsState.filter((item) => item.is_done === true)
-                      ?.length > 0 ? (
+                    {todoItemsState.filter((item) => item.is_done)?.length >
+                    0 ? (
                       todoItemsState
-                        .filter((item) => item.is_done === true)
+                        .filter((item) => item.is_done)
                         .sort(sortingCheckedItem)
                         .map((item, idx) => (
                           <Box key={item.id} className={styles.todoContainer}>
@@ -368,10 +415,9 @@ export default function Home() {
                               item={item}
                               anchorEl={anchorEl}
                               handleStartEdit={handleStartEdit}
-                              handleDeleteTodo={handleDeleteTodo}
+                              handleDeleteTodo={confirmationPopup}
                               handleAddSubTodo={handleAddSubTodo}
                               handleToggle={handleToggle}
-                              idx={idx}
                               selectedItem={selectedItem}
                               handleClick={handleClick}
                               handleClose={handleClose}
@@ -404,7 +450,9 @@ export default function Home() {
       </Box>
 
       <Dialog open={open} onClose={handleCloseModal} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? "Edit" : "Add"} Todo</DialogTitle>
+        <DialogTitle>
+          {newSubTodo?.id ? "Edit Sub" : newTodo.id ? "Edit" : "Add"} Todo
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
             <FormControl fullWidth required>
@@ -416,7 +464,7 @@ export default function Home() {
                   marginBottom: 1,
                 }}
               >
-                Todo
+                {newSubTodo?.id ? "Sub" : ""} Todo
               </FormLabel>
 
               <StyledTextField
@@ -424,50 +472,91 @@ export default function Home() {
                 name="todo"
                 variant="outlined"
                 placeholder="Todo"
-                value={newTodo.todo}
-                onChange={(e) =>
-                  setNewTodo({ ...newTodo, todo: e.target.value })
-                }
+                value={newSubTodo?.id ? newSubTodo?.name : newTodo.todo}
+                onChange={(e) => {
+                  newSubTodo?.id
+                    ? setNewSubTodo((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    : setNewTodo({ ...newTodo, todo: e.target.value });
+                }}
                 sx={{ marginBottom: 1 }}
               />
             </FormControl>
-            <FormControl fullWidth required>
-              <FormLabel
-                sx={{
-                  fontWeight: 400,
-                  color: "#4F4F4F",
-                  fontSize: "14px",
-                  marginBottom: 1,
-                }}
-              >
-                Due Date
-              </FormLabel>
-              <StyledTextField
-                id="date"
-                name="date"
-                type="date"
-                variant="outlined"
-                value={newTodo.dueDate}
-                onChange={(e) =>
-                  setNewTodo({ ...newTodo, dueDate: e.target.value })
-                }
-                slotProps={{
-                  htmlInput: {
-                    min: editingId ? undefined : dayjs().format("YYYY-MM-DD"),
-                  },
-                }}
-              />
-            </FormControl>
+            {!newSubTodo?.id && (
+              <FormControl fullWidth required>
+                <FormLabel
+                  sx={{
+                    fontWeight: 400,
+                    color: "#4F4F4F",
+                    fontSize: "14px",
+                    marginBottom: 1,
+                  }}
+                >
+                  Due Date
+                </FormLabel>
+                <StyledTextField
+                  id="date"
+                  name="date"
+                  type="date"
+                  variant="outlined"
+                  value={newTodo.dueDate}
+                  onChange={(e) =>
+                    setNewTodo({ ...newTodo, dueDate: e.target.value })
+                  }
+                  slotProps={{
+                    htmlInput: {
+                      min: newTodo.id
+                        ? undefined
+                        : dayjs().format("YYYY-MM-DD"),
+                    },
+                  }}
+                />
+              </FormControl>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
           <Button
             variant="contained"
-            onClick={editingId ? handleEditTodo : handleCreateTodo}
+            onClick={
+              newSubTodo?.id
+                ? updateSubTodo
+                : newTodo.id
+                ? handleEditTodo
+                : handleCreateTodo
+            }
           >
-            {editingId ? "Edit" : "Save"}
+            {newTodo.id ? "Edit" : "Save"}
           </Button>
           <Button onClick={handleCloseModal}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={confirmationDelete.open}
+        onClose={handleCloseModalConfirmation}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Typography>
+              Are you sure want to delete {confirmationDelete.data.todo}?
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            onClick={() =>
+              handleDeleteTodo(confirmationDelete.data as TodoItem)
+            }
+          >
+            Delete
+          </Button>
+          <Button onClick={handleCloseModalConfirmation}>Cancel</Button>
         </DialogActions>
       </Dialog>
     </>
@@ -475,7 +564,7 @@ export default function Home() {
 }
 
 const defaultValueTodo = {
-  id: 1,
+  id: 0,
   userId: 1,
   todo: "",
   dueDate: "",
@@ -484,7 +573,12 @@ const defaultValueTodo = {
 };
 
 const defaultValueSubTodo = {
-  id: 1,
+  id: 0,
   is_done: false,
   name: "",
+};
+
+const defaultSelectedValue = {
+  data: {},
+  open: false,
 };

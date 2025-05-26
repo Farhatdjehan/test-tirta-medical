@@ -8,13 +8,19 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import closeIcon from "@/public/icons/times.svg";
+import { Dispatch, SetStateAction } from "react";
+interface SubTodoItemProps {
+  id: number;
+  is_done: boolean;
+  name: string;
+}
 
 interface SubTodoProps {
-  handleDeleteSubTodo: any;
-  newSubTodo: any;
-  setNewSubTodo: any;
-  handleSaveSubTodo: any;
-  createNewTodo: any;
+  handleDeleteSubTodo: () => void;
+  newSubTodo: SubTodoItemProps;
+  setNewSubTodo: Dispatch<SetStateAction<SubTodoItemProps>>;
+  handleSaveSubTodo: (idx: number, name: string) => void;
+  createNewTodo: () => void;
   idx: number;
 }
 
@@ -63,9 +69,7 @@ export default function AddSubTodoField(props: SubTodoProps) {
             handleSaveSubTodo(idx, newName);
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              createNewTodo(e);
-            }
+            if (e.key === "Enter") createNewTodo();
           }}
         />
       </ListItem>
