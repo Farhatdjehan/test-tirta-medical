@@ -10,6 +10,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 32px;
+  position: relative;
   @media (min-width: 768px) {
     padding: 24px 109px 24px 88px;
   }
